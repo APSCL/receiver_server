@@ -4,9 +4,35 @@ from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
+# --- imports from old AGV Server
+import rclpy
+import signal
+from rclpy.node import Node
+from std_msgs.msg import String
+import threading
+from flask import Flask, request
+import requests
+import random
+import time
+import sys
+import json
+from nav2_simple_commander.robot_navigator import BasicNavigator, NavigationResult
+from geometry_msgs.msg import PoseStamped
+
 db = SQLAlchemy()
 ma = Marshmallow()
 migrate = Migrate()
+
+rclpy.init(args=None)
+nav = BasicNavigator()
+init_pose = PoseStamped()
+
+init_pose.header.stamp = nav.get_clock().now().to_msg()
+init_pose.pose.position.x = 0.0
+init_pose.pose.position.y = 2.0
+init_pose.pose.orientation.z = 1.0
+init_pose.pose.orientation.w = 0.0
+init_pose.header.frame_id = 'map'
 
 def create_app(conf_type=ConfigType.DEVELOPMENT):
     app = Flask(__name__)

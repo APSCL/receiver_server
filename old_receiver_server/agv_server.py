@@ -91,8 +91,10 @@ def convertLatLonXY(lat, lon):
 # receive waypoints from server and call publish_nav2
 @app.route('/receiveWaypoints', methods=('GET','POST'))
 def receive_waypoints():
+    print("HELLO FROM SERVER")
+    return None, 200
     if request.method == 'POST':
-
+        print("HELLO FROM SERVER")
         data = request.form
         print('got this raw data:', data)
 

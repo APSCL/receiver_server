@@ -2,6 +2,7 @@ from app import create_app
 import sys
 from app.config import ConfigType
 import argparse
+import rclpy
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_type", type=str, required=False)
