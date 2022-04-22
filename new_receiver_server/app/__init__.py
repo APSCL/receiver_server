@@ -9,7 +9,6 @@ import rclpy
 import signal
 from rclpy.node import Node
 from std_msgs.msg import String
-import threading
 from flask import Flask, request
 import requests
 import random
@@ -27,16 +26,9 @@ rclpy.init(args=None)
 nav = BasicNavigator()
 init_pose = PoseStamped()
 
-init_pose.header.stamp = nav.get_clock().now().to_msg()
-init_pose.pose.position.x = 0.0
-init_pose.pose.position.y = 2.0
-init_pose.pose.orientation.z = 1.0
-init_pose.pose.orientation.w = 0.0
-init_pose.header.frame_id = 'map'
-
-def create_app(conf_type=ConfigType.DEVELOPMENT):
+def create_app(waypoint_ip, conf_type=ConfigType.DEVELOPMENT):
     app = Flask(__name__)
-    initialize_config(app, conf_type)
+    initialize_config(app, waypoint_ip, conf_type)
     # set up all flask extensions
     initialize_extensions(app)
     # register routes and blueprints
@@ -46,21 +38,25 @@ def create_app(conf_type=ConfigType.DEVELOPMENT):
 
     return app
 
-def initialize_config(app, conf_type):
+def initialize_config(app, waypoint_ip, conf_type):
     conf_dict = {conf.name:conf.value for conf in ConfigType}
     conf_class = conf_dict.get(conf_type.name, DevelopmentConfig)
     app.config.from_object(conf_class)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["WAYPOINT_IP_ADDRESS"] = waypoint_ip
 
 def initialize_extensions(app):
     db.init_app(app)
     with app.app_context():
-        db.create_all()
+        initialize_database()
     ma.init_app(app)
     migrate.init_app(app, db)
 
 def register_blueprints(app):
     from app.commands import commands
     app.register_blueprint(commands, url_prefix="/commands")
+    from app.pings import pings
+    app.register_blueprint(pings, url_prefix="/pings")
 
 # TODO: Set up error_handlers, possibly (could just do validation purely from within backend)
 def register_error_handlers(app):
@@ -69,3 +65,7 @@ def register_error_handlers(app):
 # TODO: Set up logging for the APP
 def configure_logging(app):
     pass
+
+def initialize_database():
+    # import all models here
+    db.create_all()
